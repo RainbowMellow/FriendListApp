@@ -38,10 +38,14 @@ class MainActivity : AppCompatActivity() {
         val friendAdapter = RecycleAdapter(friends)
         recycler.adapter = friendAdapter
 
+
+        println((recycler.layoutManager as LinearLayoutManager).itemCount.toString())
+
         friendAdapter.itemClickListener = { position, friends ->
 
             friends.isFavorite = !friends.isFavorite
-            recycler[position].imgBtnIsFav.setImageResource(if (friends.isFavorite) R.drawable.ok else R.drawable.notok)
+            (recycler.layoutManager as LinearLayoutManager).findViewByPosition(position)?.imgBtnIsFav?.setImageResource(
+                if (friends.isFavorite) R.drawable.ok else R.drawable.notok)
 
             println(position)
             println(friends.name)
@@ -91,6 +95,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
     }
 
     fun onClickClear(view: View) {

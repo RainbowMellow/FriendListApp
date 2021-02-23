@@ -4,8 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.core.view.get
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,10 +19,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //Find the RecyclerView and make a reference to it
         val recycler = findViewById<RecyclerView>(R.id.recyclerView)
 
+        //Setting the recyclers layoutmanager to be a LinearLayoutManager
         recycler.layoutManager = LinearLayoutManager(this)
 
+        //Adding the lines in between the rows
         recycler.addItemDecoration(
             DividerItemDecoration(
                 this,
@@ -32,6 +33,7 @@ class MainActivity : AppCompatActivity() {
             )
         )
 
+        //Sets the items in the recycler to have a fixed size
         recycler.setHasFixedSize(true)
 
         val friends = Friends().getAll()
@@ -39,31 +41,36 @@ class MainActivity : AppCompatActivity() {
         recycler.adapter = friendAdapter
 
 
-        println((recycler.layoutManager as LinearLayoutManager).itemCount.toString())
-
+        //Sets the on click listener
+        //When a persons row is clicked the isFavorite boolean will be set to the opposite value.
+        //The picture showing if a person is a favorite will also be changed.
         friendAdapter.itemClickListener = { position, friends ->
 
             friends.isFavorite = !friends.isFavorite
+
+            //The view needs to be found from the layoutmanager, because if you do:
+            //recycler[position] it refers to the viewgroups childcount which isn't the same as
+            //the itemcount. Therefore it will cause an out of bound exception.
             (recycler.layoutManager as LinearLayoutManager).findViewByPosition(position)?.imgBtnIsFav?.setImageResource(
                 if (friends.isFavorite) R.drawable.ok else R.drawable.notok)
-
-            println(position)
-            println(friends.name)
         }
 
+        //Sets a listener on the searchView.
+        //Activates when text is written in the search bar
         swSearch.setOnQueryTextListener(object: SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
             }
 
+            //Filters the list
             override fun onQueryTextChange(newText: String?): Boolean {
-                println("Got query: " + newText)
                 (recycler.adapter as RecycleAdapter).filter.filter(newText)
                 return false
             }
         })
 
 
+        //Setup for the spinner
         val spinner = spinFilter
         val filter = resources.getStringArray(R.array.filter)
 
@@ -98,6 +105,8 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    //Clears the search field, sets it as iconified (Like not clicked on yet)
+    //Selects all friends on the spinner
     fun onClickClear(view: View) {
         swSearch.setQuery("", false)
         swSearch.isIconified = true

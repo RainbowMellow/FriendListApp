@@ -8,6 +8,7 @@ class Friends {
     {
         val friendList = ArrayList<BEFriend>()
 
+        //Mockdata from Mockaroo.com
         friendList.add(BEFriend(name = "Emyle Chowne", phone = "48787879", address = "461 Crest Line Junction", isFavorite = true))
         friendList.add(BEFriend(name = "Aida Gatchell", phone = "73573619", address = "41300 Sullivan Avenue", isFavorite = false))
         friendList.add(BEFriend(name = "Munmro Retchless", phone = "14599565", address = "1156 Elmside Parkway", isFavorite = true))
@@ -35,17 +36,6 @@ class Friends {
         friendList.add(BEFriend(name = "Temple Slaymaker", phone = "52453808", address = "8960 Miller Court", isFavorite = true))
 
         return friendList
-    }
-
-    fun getAllNames(): ArrayList<String>
-    {
-        val friendNames = ArrayList<String>()
-
-        friends.forEach { f ->
-            friendNames.add(f.name)
-        }
-
-        return friendNames
     }
 
     fun getAll(): ArrayList<BEFriend>

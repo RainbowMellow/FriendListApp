@@ -16,7 +16,11 @@ import kotlin.collections.ArrayList
 class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Adapter<RecycleAdapter.FriendViewHolder>(),
     Filterable {
 
+    //FriendFilterList = List shown in the recycleView
     var friendFilterList = ArrayList<BEFriend>()
+
+    //ListOfFilteredFriends = The list after it has been filtered
+    // (So you can use the spinner on the filtered text.)
     var listOfFilteredFriends = ArrayList<BEFriend>()
 
     init {
@@ -24,9 +28,10 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         listOfFilteredFriends = friendFilterList
     }
 
+
     var itemClickListener: ((position: Int, friend: BEFriend) -> Unit)? = null
 
-
+    //Sets what should be filtered
     override fun getFilter(): Filter {
         return object : Filter() {
             override fun performFiltering(constraint: CharSequence?): FilterResults {
@@ -37,6 +42,8 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
                 }
                 else {
                     val resultList = ArrayList<BEFriend>()
+
+                    //The user input from the search bar should be looked for in name, address and phone
                     for (row in friends) {
                         if(row.name.toLowerCase(Locale.ROOT).contains(charSearch.toLowerCase(Locale.ROOT).trim()) ||
                             row.address.toLowerCase(Locale.ROOT).contains(charSearch.toLowerCase(Locale.ROOT).trim()) ||
@@ -46,6 +53,9 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
                         }
                     }
                     friendFilterList = resultList
+
+                    //Setting the listOfFilteredFriends to be stuck at this instance of friendFilterList
+                    //Because friendFilterList changes depending on what the list should show on screen
                     listOfFilteredFriends = friendFilterList
                 }
                 val filterResults = FilterResults()
@@ -69,7 +79,7 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
     }
 
     override fun onBindViewHolder(holder: FriendViewHolder, position: Int) {
-        // Getting element from names list at this position
+        // Getting element from friend list at this position
         val element = friendFilterList[position]
 
         val colours = intArrayOf(
@@ -77,7 +87,7 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
             Color.parseColor("#CCCCCC")
         )
 
-        // Updating the text of the txtName with this element
+        // Updating the text of the views in the cell view with this elements info
         holder.txtName.text = element.name
         holder.txtPhone.text = element.phone
         holder.txtAddress.text = element.address
@@ -85,7 +95,7 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         holder.itemView.setBackgroundColor(colours[position % colours.size])
 
         holder.itemView.setOnClickListener {
-            // Invoking itemClickListener and passing it the position and name
+            // Invoking itemClickListener and passing it the position and friend
             itemClickListener?.invoke(position, element)
         }
     }
@@ -94,7 +104,8 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         return friendFilterList.size
     }
 
-
+    //Functions that works with the spinner.
+    //Filters the list of all friends to only show favorites or non-favorites
     fun getFavorites() {
         val favoriteList: List<BEFriend> = listOfFilteredFriends.filter { f -> f.isFavorite}
         friendFilterList = favoriteList as ArrayList<BEFriend>
@@ -105,11 +116,13 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         friendFilterList = nonFavoriteList as ArrayList<BEFriend>
         notifyDataSetChanged()
     }
+    //Returns the list to all friends
     fun getAll() {
         friendFilterList = listOfFilteredFriends
         notifyDataSetChanged()
     }
 
+    //Finds all the views we want to fill with info
     class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val txtName = itemView.findViewById(R.id.tvName) as TextView
         val txtPhone = itemView.findViewById(R.id.tvPhone) as TextView

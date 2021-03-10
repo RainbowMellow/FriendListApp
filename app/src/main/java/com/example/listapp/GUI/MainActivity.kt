@@ -50,14 +50,15 @@ class MainActivity : AppCompatActivity() {
         recycler.adapter = friendAdapter
 
 
-        //Sets the on click listener
-        //When a persons row is clicked the isFavorite boolean will be set to the opposite value.
-        //The picture showing if a person is a favorite will also be changed.
         friendAdapter.itemClickListener = { position, chosenFriend ->
 
             //Opens the detailview with the detailactivity
             val intent = Intent(this, DetailActivity::class.java)
             val friend = friends[position]
+
+            println(position)
+            println(friend.name)
+
             intent.putExtra("friend", friend)
             intent.putExtra("isCreate", false)
             startActivityForResult(intent, 1)

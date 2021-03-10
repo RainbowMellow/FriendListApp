@@ -133,7 +133,19 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
     fun addFriend(friend: BEFriend)
     {
         friendFilterList.add(friend)
+
+        var index = 0
+
+        friendFilterList.forEach{ f ->
+            if (f.name == friend.name && f.phone == friend.phone
+                    && f.address == friend.address && f.isFavorite == friend.isFavorite)
+            {
+                index = friendFilterList.indexOf(f)
+            }
+        }
+
         notifyDataSetChanged()
+        notifyItemRangeChanged(index, friendFilterList.size)
     }
 
     fun editFriend(friend: BEFriend, chosenFriend: BEFriend) {
@@ -183,6 +195,7 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         friendFilterList.removeAt(index)
 
         notifyItemRemoved(index)
+        notifyItemRangeChanged(index, friendFilterList.size)
     }
 
 }

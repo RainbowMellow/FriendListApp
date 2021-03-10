@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingBottom="20dp">
+    android:paddingBottom="20dp"
+    android:background="@color/white">
 
     <LinearLayout
         android:id="@+id/llInfo"
@@ -21,7 +22,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Name: "
+                android:text="@string/nameDetail"
                 android:textStyle="bold"
                 android:textSize="20sp"
                 android:layout_marginEnd="20sp"
@@ -37,7 +38,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Address: "
+                android:text="@string/addressDetail"
                 android:textStyle="bold"
                 android:textSize="20sp"
                 android:layout_marginEnd="20sp"
@@ -55,7 +56,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Phone number: "
+                android:text="@string/phoneDetail"
                 android:textStyle="bold"
                 android:textSize="20sp"
                 android:layout_marginEnd="20sp"
@@ -76,44 +77,55 @@
         android:id="@+id/cbFavorite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Favorite"
+        android:text="@string/favorite"
         android:textSize="20sp"
         android:layout_gravity="center"
         android:layout_marginTop="30dp"/>
 
     </LinearLayout>
 
-    <Button
-        android:layout_width="150dp"
-        android:layout_height="60dp"
-        android:text="Back"
-        android:textSize="20sp"
-        android:layout_gravity="center"
-        android:layout_marginTop="50dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:onClick="onClickBack"/>
-
-    <ImageButton
-        android:id="@+id/ibTrash"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginStart="20dp"
-        android:layout_marginBottom="20dp"
-        android:onClick="onClickDelete"
-        android:src="@drawable/trash" />
+        android:gravity="center">
 
-    <ImageButton
-        android:id="@+id/ibSave"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
-        android:src="@drawable/save"
-        android:onClick="onClickSave"/>
+        <ImageButton
+            android:id="@+id/ibTrash"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:onClick="onClickDelete"
+            android:src="@drawable/trash"
+            android:background="@color/white"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:layout_width="150dp"
+            android:layout_height="60dp"
+            android:text="@string/back"
+            android:textSize="20sp"
+            android:onClick="onClickBack"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/ibSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
+            android:src="@drawable/save"
+            android:onClick="onClickSave"
+            android:background="@color/white"/>
+
+    </LinearLayout>
+
 
 </RelativeLayout>

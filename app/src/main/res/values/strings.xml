@@ -4,6 +4,7 @@
     <string name="name">Name</string>
     <string name="phone">Phone</string>
     <string name="address">Address</string>
+    <string name="create">Create</string>
 
     <string-array name="filter">
         <item>Show all</item>

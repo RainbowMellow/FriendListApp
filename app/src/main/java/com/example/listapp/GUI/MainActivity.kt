@@ -1,5 +1,6 @@
 package com.example.listapp.GUI
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.*
@@ -7,13 +8,23 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.listapp.Model.BEFriend
 import com.example.listapp.Model.Friends
 import com.example.listapp.Model.RecycleAdapter
 import com.example.listapp.R
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.cell.view.*
+import java.io.Serializable
 
 class MainActivity : AppCompatActivity() {
+
+    lateinit var friendAdapter: RecycleAdapter
+
+    var friends = Friends().getAll()
+
+    val CREATE_FRIEND = 1
+    val DELETE_FRIEND = 2
+    val UPDATE_FRIEND = 3
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,24 +46,34 @@ class MainActivity : AppCompatActivity() {
 
         //Sets the items in the recycler to have a fixed size
         recycler.setHasFixedSize(true)
-
-        val friends = Friends().getAll()
-        val friendAdapter = RecycleAdapter(friends)
+        friendAdapter = RecycleAdapter(friends)
         recycler.adapter = friendAdapter
 
 
         //Sets the on click listener
         //When a persons row is clicked the isFavorite boolean will be set to the opposite value.
         //The picture showing if a person is a favorite will also be changed.
-        friendAdapter.itemClickListener = { position, friends ->
+        friendAdapter.itemClickListener = { position, chosenFriend ->
 
-            friends.isFavorite = !friends.isFavorite
+            //Opens the detailview with the detailactivity
+            val intent = Intent(this, DetailActivity::class.java)
+            val friend = friends[position]
+            intent.putExtra("friend", friend)
+            intent.putExtra("isCreate", false)
+            startActivityForResult(intent, 1)
 
-            //The view needs to be found from the layoutmanager, because if you do:
-            //recycler[position] it refers to the viewgroups childcount which isn't the same as
-            //the itemcount. Therefore it will cause an out of bound exception.
-            (recycler.layoutManager as LinearLayoutManager).findViewByPosition(position)?.imgBtnIsFav?.setImageResource(
-                if (friends.isFavorite) R.drawable.ok else R.drawable.notok)
+
+        // region Code that makes the friend = !friend.favorite when clicked
+            //    friends.isFavorite = !friends.isFavorite
+
+                //The view needs to be found from the layoutmanager, because if you do:
+                //recycler[position] it refers to the viewgroups childcount which isn't the same as
+                //the itemcount. Therefore it will cause an out of bound exception.
+
+            //    (recycler.layoutManager as LinearLayoutManager).findViewByPosition(position)?.imgBtnIsFav?.setImageResource(
+            //        if (friends.isFavorite) R.drawable.ok else R.drawable.notok)
+        //endregion
+
         }
 
         //Sets a listener on the searchView.
@@ -105,6 +126,36 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(requestCode == 1)
+        {
+            if(resultCode == CREATE_FRIEND)
+            {
+                val friend = data?.extras?.getSerializable("friend") as BEFriend
+                friendAdapter.addFriend(friend)
+                friends = friendAdapter.getList()
+            }
+
+            if(resultCode == DELETE_FRIEND)
+            {
+                val friend = data?.extras?.getSerializable("chosenFriend") as BEFriend
+                friendAdapter.deleteFriend(friend)
+                friends = friendAdapter.getList()
+            }
+
+            if(resultCode == UPDATE_FRIEND)
+            {
+                val friend = data?.extras?.getSerializable("friend") as BEFriend
+                val chosenFriend = data.extras!!.getSerializable("chosenFriend") as BEFriend
+                friendAdapter.editFriend(friend, chosenFriend)
+                friends = friendAdapter.getList()
+            }
+        }
+    }
+
+
+
     //Clears the search field, sets it as iconified (Like not clicked on yet)
     //Selects all friends on the spinner
     fun onClickClear(view: View) {
@@ -112,5 +163,12 @@ class MainActivity : AppCompatActivity() {
         swSearch.isIconified = true
 
         spinFilter.setSelection(0)
+    }
+
+    fun onClickCreate(view: View) {
+        //Opens the detailview with the detailactivity
+        val intent = Intent(this, DetailActivity::class.java)
+        intent.putExtra("isCreate", true)
+        startActivityForResult(intent, 1)
     }
 }

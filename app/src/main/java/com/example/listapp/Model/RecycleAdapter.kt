@@ -130,4 +130,59 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         val imgBtnIsFav = itemView.findViewById(R.id.imgBtnIsFav) as ImageView
     }
 
+    fun addFriend(friend: BEFriend)
+    {
+        friendFilterList.add(friend)
+        notifyDataSetChanged()
+    }
+
+    fun editFriend(friend: BEFriend, chosenFriend: BEFriend) {
+
+        println(chosenFriend.name)
+        println(chosenFriend.address)
+        println(chosenFriend.phone)
+        println(chosenFriend.isFavorite)
+
+        var index = 0
+
+        friendFilterList.forEach{ f ->
+            if (f.name == chosenFriend.name && f.phone == chosenFriend.phone
+                    && f.address == chosenFriend.address && f.isFavorite == chosenFriend.isFavorite)
+            {
+                index = friendFilterList.indexOf(f)
+            }
+        }
+
+        println(index)
+
+        val editedFriend = friendFilterList[index]
+        editedFriend.name = friend.name
+        editedFriend.phone = friend.phone
+        editedFriend.address = friend.address
+        editedFriend.isFavorite = friend.isFavorite
+
+        notifyItemChanged(index)
+    }
+
+    fun getList() : ArrayList<BEFriend>
+    {
+        return friendFilterList
+    }
+
+    fun deleteFriend(chosenFriend: BEFriend) {
+        var index = 0
+
+        friendFilterList.forEach{ f ->
+            if (f.name == chosenFriend.name && f.phone == chosenFriend.phone
+                    && f.address == chosenFriend.address && f.isFavorite == chosenFriend.isFavorite)
+            {
+                index = friendFilterList.indexOf(f)
+            }
+        }
+
+        friendFilterList.removeAt(index)
+
+        notifyItemRemoved(index)
+    }
+
 }

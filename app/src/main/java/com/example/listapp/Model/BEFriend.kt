@@ -1,3 +1,7 @@
 package com.example.listapp.Model
 
-class BEFriend (val name: String, val phone: String, val address: String, var isFavorite: Boolean)
+import java.io.Serializable
+
+class BEFriend (var name: String, var phone: String, var address: String, var isFavorite: Boolean) : Serializable {
+
+}

@@ -12,66 +12,143 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp">
+        android:layout_marginTop="50dp"
+        android:gravity="center">
 
-        <GridLayout
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/nameDetail"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:layout_marginEnd="20sp"
+                    android:layout_gravity="center"/>
+
+                <EditText
+                    android:id="@+id/etName"
+                    android:layout_width="160dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:inputType="textImeMultiLine"/>
+
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/addressDetail"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:layout_marginEnd="20sp"
+                    android:layout_gravity="center"/>
+
+                <EditText
+                    android:id="@+id/etAddress"
+                    android:layout_width="160dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:inputType="textImeMultiLine"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/phoneDetail"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:layout_marginEnd="20sp"
+                    android:layout_gravity="center"/>
+
+                <EditText
+                    android:id="@+id/etPhone"
+                    android:layout_width="160dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:inputType="phone"/>
+
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/phone"
+                    android:onClick="onClickCall"/>
+
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/sms"
+                    android:onClick="onClickText"/>
+
+            </LinearLayout>
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:columnCount="2">
+            android:orientation="horizontal"
+            android:layout_marginTop="20dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/nameDetail"
+                android:text="@string/emailDetail"
                 android:textStyle="bold"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:layout_marginEnd="20sp"
                 android:layout_gravity="center"/>
 
             <EditText
-                android:id="@+id/etName"
-                android:layout_width="180dp"
+                android:id="@+id/etEmail"
+                android:layout_width="160dp"
                 android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:inputType="textImeMultiLine"/>
+                android:textSize="18sp"
+                android:inputType="textEmailAddress"
+                android:clickable="true"
+                android:focusable="true"
+                android:onClick="onClickEMAIL"/>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="20dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/addressDetail"
+                android:text="@string/urlDetail"
                 android:textStyle="bold"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:layout_marginEnd="20sp"
-                android:layout_gravity="center"
-                android:layout_marginTop="20dp"/>
+                android:layout_gravity="center"/>
 
             <EditText
-                android:id="@+id/etAddress"
-                android:layout_width="180dp"
+                android:id="@+id/etURL"
+                android:layout_width="160dp"
                 android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:layout_marginTop="20dp"
-                android:inputType="textImeMultiLine"/>
+                android:textSize="18sp"
+                android:inputType="textUri"
+                android:clickable="true"
+                android:focusable="true"
+                android:onClick="onClickBROWSER"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/phoneDetail"
-                android:textStyle="bold"
-                android:textSize="20sp"
-                android:layout_marginEnd="20sp"
-                android:layout_gravity="center"
-                android:layout_marginTop="20dp"/>
+        </LinearLayout>
 
-            <EditText
-                android:id="@+id/etPhone"
-                android:layout_width="180dp"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:inputType="phone"
-                android:layout_marginTop="20dp"/>
-
-        </GridLayout>
 
         <CheckBox
         android:id="@+id/cbFavorite"

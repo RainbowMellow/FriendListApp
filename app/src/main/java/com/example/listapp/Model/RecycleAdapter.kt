@@ -172,6 +172,8 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         editedFriend.phone = friend.phone
         editedFriend.address = friend.address
         editedFriend.isFavorite = friend.isFavorite
+        editedFriend.email = friend.email
+        editedFriend.url = friend.url
 
         notifyItemChanged(index)
     }

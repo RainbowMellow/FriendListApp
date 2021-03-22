@@ -7,9 +7,11 @@
     <string name="create">Create</string>
     <string name="back">Back</string>
     <string name="nameDetail">Name:</string>
-    <string name="phoneDetail">Phone number:</string>
+    <string name="phoneDetail">Phone:</string>
     <string name="addressDetail">Address:</string>
     <string name="favorite">Favorite</string>
+    <string name="urlDetail">URL:</string>
+    <string name="emailDetail">Email:</string>
 
     <string-array name="filter">
         <item>Show all</item>

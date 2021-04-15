@@ -1,14 +1,18 @@
 package com.example.listapp.Model
 
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import com.example.listapp.R
-import org.w3c.dom.Text
+import kotlinx.android.synthetic.main.cell.*
+import java.time.LocalDate
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -45,9 +49,19 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
 
                     //The user input from the search bar should be looked for in name, address and phone
                     for (row in friends) {
-                        if(row.name.toLowerCase(Locale.ROOT).contains(charSearch.toLowerCase(Locale.ROOT).trim()) ||
-                            row.address.toLowerCase(Locale.ROOT).contains(charSearch.toLowerCase(Locale.ROOT).trim()) ||
-                            row.phone.toLowerCase(Locale.ROOT).contains(charSearch.toLowerCase(Locale.ROOT).trim()))
+                        if(row.name.toLowerCase(Locale.ROOT).contains(
+                                charSearch.toLowerCase(Locale.ROOT).trim()
+                            ) ||
+                            row.address.toLowerCase(Locale.ROOT).contains(
+                                charSearch.toLowerCase(
+                                    Locale.ROOT
+                                ).trim()
+                            ) ||
+                            row.phone.toLowerCase(Locale.ROOT).contains(
+                                charSearch.toLowerCase(
+                                    Locale.ROOT
+                                ).trim()
+                            ))
                         {
                             resultList.add(row)
                         }
@@ -78,6 +92,7 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         return FriendViewHolder(view)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: FriendViewHolder, position: Int) {
         // Getting element from friend list at this position
         val element = friendFilterList[position]
@@ -91,7 +106,27 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         holder.txtName.text = element.name
         holder.txtPhone.text = element.phone
         holder.txtAddress.text = element.address
-        holder.imgBtnIsFav.setImageResource(if (element.isFavorite) R.drawable.ok else R.drawable.notok)
+
+        if(element.picture != null)
+        {
+            val mSaveBit = element.picture
+            val filePath: String = mSaveBit?.path.toString()
+            val bitmap = BitmapFactory.decodeFile(filePath)
+            holder.picture.setImageBitmap(bitmap)
+            holder.picture.rotation = 90F;
+        }
+        else {
+            holder.picture.setImageResource(R.drawable.avatar)
+        }
+
+        if(element.birthday == LocalDate.now())
+        {
+            holder.birthday.visibility = View.VISIBLE
+        }
+        else {
+            holder.birthday.visibility = View.INVISIBLE
+        }
+
         holder.itemView.setBackgroundColor(colours[position % colours.size])
 
         holder.itemView.setOnClickListener {
@@ -104,18 +139,6 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         return friendFilterList.size
     }
 
-    //Functions that works with the spinner.
-    //Filters the list of all friends to only show favorites or non-favorites
-    fun getFavorites() {
-        val favoriteList: List<BEFriend> = listOfFilteredFriends.filter { f -> f.isFavorite}
-        friendFilterList = favoriteList as ArrayList<BEFriend>
-        notifyDataSetChanged()
-    }
-    fun getNonFavorites() {
-        val nonFavoriteList: List<BEFriend> = listOfFilteredFriends.filter { f -> !f.isFavorite}
-        friendFilterList = nonFavoriteList as ArrayList<BEFriend>
-        notifyDataSetChanged()
-    }
     //Returns the list to all friends
     fun getAll() {
         friendFilterList = listOfFilteredFriends
@@ -127,7 +150,8 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         val txtName = itemView.findViewById(R.id.tvName) as TextView
         val txtPhone = itemView.findViewById(R.id.tvPhone) as TextView
         val txtAddress = itemView.findViewById(R.id.tvAddress) as TextView
-        val imgBtnIsFav = itemView.findViewById(R.id.imgBtnIsFav) as ImageView
+        val picture = itemView.findViewById(R.id.ivPicture) as ImageView
+        val birthday = itemView.findViewById(R.id.ivFlag) as ImageView
     }
 
     fun addFriend(friend: BEFriend)
@@ -138,7 +162,7 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
 
         friendFilterList.forEach{ f ->
             if (f.name == friend.name && f.phone == friend.phone
-                    && f.address == friend.address && f.isFavorite == friend.isFavorite)
+                    && f.address == friend.address)
             {
                 index = friendFilterList.indexOf(f)
             }
@@ -153,13 +177,12 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         println(chosenFriend.name)
         println(chosenFriend.address)
         println(chosenFriend.phone)
-        println(chosenFriend.isFavorite)
 
         var index = 0
 
         friendFilterList.forEach{ f ->
             if (f.name == chosenFriend.name && f.phone == chosenFriend.phone
-                    && f.address == chosenFriend.address && f.isFavorite == chosenFriend.isFavorite)
+                    && f.address == chosenFriend.address)
             {
                 index = friendFilterList.indexOf(f)
             }
@@ -171,9 +194,11 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         editedFriend.name = friend.name
         editedFriend.phone = friend.phone
         editedFriend.address = friend.address
-        editedFriend.isFavorite = friend.isFavorite
         editedFriend.email = friend.email
         editedFriend.url = friend.url
+        editedFriend.birthday = friend.birthday
+
+        editedFriend.picture = friend.picture
 
         notifyItemChanged(index)
     }
@@ -188,7 +213,7 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
 
         friendFilterList.forEach{ f ->
             if (f.name == chosenFriend.name && f.phone == chosenFriend.phone
-                    && f.address == chosenFriend.address && f.isFavorite == chosenFriend.isFavorite)
+                    && f.address == chosenFriend.address)
             {
                 index = friendFilterList.indexOf(f)
             }

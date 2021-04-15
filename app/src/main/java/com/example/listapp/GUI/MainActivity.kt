@@ -1,9 +1,20 @@
 package com.example.listapp.GUI
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -12,6 +23,7 @@ import com.example.listapp.Model.BEFriend
 import com.example.listapp.Model.Friends
 import com.example.listapp.Model.RecycleAdapter
 import com.example.listapp.R
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.cell.view.*
 import java.io.Serializable
@@ -20,7 +32,9 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var friendAdapter: RecycleAdapter
 
+    @RequiresApi(Build.VERSION_CODES.O)
     var friends = Friends().getAll()
+    var currentLocation = Pair(0.0, 0.0)
 
     val CREATE_FRIEND = 1
     val DELETE_FRIEND = 2
@@ -29,6 +43,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        requestPermissions()
+        startListening()
+        getLocation()
 
         //Find the RecyclerView and make a reference to it
         val recycler = findViewById<RecyclerView>(R.id.recyclerView)
@@ -56,27 +74,19 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, DetailActivity::class.java)
             val friend = friends[position]
 
-            println(position)
-            println(friend.name)
+            val lat: Double = currentLocation.first
+            val lng: Double = currentLocation.second
 
             intent.putExtra("friend", friend)
             intent.putExtra("isCreate", false)
+            intent.putExtra("lat", lat)
+            intent.putExtra("lng", lng)
+
             startActivityForResult(intent, 1)
-
-
-        // region Code that makes the friend = !friend.favorite when clicked
-            //    friends.isFavorite = !friends.isFavorite
-
-                //The view needs to be found from the layoutmanager, because if you do:
-                //recycler[position] it refers to the viewgroups childcount which isn't the same as
-                //the itemcount. Therefore it will cause an out of bound exception.
-
-            //    (recycler.layoutManager as LinearLayoutManager).findViewByPosition(position)?.imgBtnIsFav?.setImageResource(
-            //        if (friends.isFavorite) R.drawable.ok else R.drawable.notok)
-        //endregion
-
         }
 
+        // region Unused filtering methods from before
+/*
         //Sets a listener on the searchView.
         //Activates when text is written in the search bar
         swSearch.setOnQueryTextListener(object: SearchView.OnQueryTextListener{
@@ -89,12 +99,12 @@ class MainActivity : AppCompatActivity() {
                 (recycler.adapter as RecycleAdapter).filter.filter(newText)
                 return false
             }
-        })
+        })*/
 
 
         //Setup for the spinner
-        val spinner = spinFilter
-        val filter = resources.getStringArray(R.array.filter)
+        // val spinner = spinFilter
+        /*val filter = resources.getStringArray(R.array.filter)
 
         if (spinner != null) {
             val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filter)
@@ -115,17 +125,44 @@ class MainActivity : AppCompatActivity() {
                     0 -> {
                         (recycler.adapter as RecycleAdapter).getAll()
                     }
-                    1 -> {
-                        (recycler.adapter as RecycleAdapter).getFavorites()
-                    }
-                    2 -> {
-                        (recycler.adapter as RecycleAdapter).getNonFavorites()
-                    }
                 }
             }
         }
+*/
+    // endregion
 
     }
+
+    // region Menu
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.main_menu, menu);
+
+        return true;
+
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        val id: Int = item.getItemId()
+
+
+        when (id) {
+            R.id.action_new -> {
+                //Opens the detailview with the detailactivity
+                val intent = Intent(this, DetailActivity::class.java)
+                intent.putExtra("isCreate", true)
+                startActivityForResult(intent, 1)
+                true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    // endregion
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -155,21 +192,107 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+    // region Unused Clear Search field method
 
     //Clears the search field, sets it as iconified (Like not clicked on yet)
     //Selects all friends on the spinner
-    fun onClickClear(view: View) {
-        swSearch.setQuery("", false)
-        swSearch.isIconified = true
+    // fun onClickClear(view: View) {
+     //   swSearch.setQuery("", false)
+       // swSearch.isIconified = true
 
-        spinFilter.setSelection(0)
+    //    spinFilter.setSelection(0)
+    //}
+
+    // endregion
+
+    // region Get Current Location
+
+    private val permissions = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION)
+
+    private fun requestPermissions() {
+        if (!isPermissionGiven()) {
+            println("permission denied to USE GPS - requesting it")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                requestPermissions(permissions, 1)
+        } else
+            println("permission to USE GPS granted!")
+            //startListening()
+            getLocation()
     }
 
-    fun onClickCreate(view: View) {
-        //Opens the detailview with the detailactivity
-        val intent = Intent(this, DetailActivity::class.java)
-        intent.putExtra("isCreate", true)
-        startActivityForResult(intent, 1)
+    private fun isPermissionGiven(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return permissions.all { p -> checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED}
+        }
+        return true
     }
+
+    @SuppressLint("MissingPermission")
+    fun getLocation() {
+        if (!isPermissionGiven()) {
+            println("No permission given")
+            return
+        }
+
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        // The type of location is Location? - it can be null... handle cases
+
+        if (location != null) {
+            println("Location = ${location.latitude}, ${location.longitude}")
+            currentLocation = Pair(location.altitude, location.longitude)
+
+            startListening()
+        } else
+            println("Location = null")
+    }
+
+    var myLocationListener: LocationListener? = null
+
+    @SuppressLint("MissingPermission")
+    private fun startListening() {
+        if (!isPermissionGiven())
+            return
+
+        if (myLocationListener == null)
+            myLocationListener = object : LocationListener {
+                var count: Int = 0
+
+                override fun onLocationChanged(location: Location) {
+                    count++
+                    println("Location changed")
+                    println("Location = ${location.latitude}, ${location.longitude}")
+
+                    currentLocation = Pair(location.latitude, location.longitude)
+                }
+
+                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+
+                }
+            }
+
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+            0,
+            0.0F,
+            myLocationListener!!)
+
+    }
+
+    private fun stopListening() {
+
+        if (myLocationListener == null) return
+
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager.removeUpdates(myLocationListener!!)
+    }
+
+    override fun onStop(){
+        stopListening()
+        super.onStop()
+    }
+
+    // endregion
 }

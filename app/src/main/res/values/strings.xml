@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ListApp</string>
+    <string name="app_name">Friend App</string>
     <string name="clear">Clear</string>
     <string name="name">Name</string>
     <string name="phone">Phone</string>
@@ -12,10 +12,17 @@
     <string name="favorite">Favorite</string>
     <string name="urlDetail">URL:</string>
     <string name="emailDetail">Email:</string>
+    <string name="bdDetail">Birthday:</string>
+
 
     <string-array name="filter">
         <item>Show all</item>
         <item>Show favorites</item>
         <item>Show non-favorites</item>
     </string-array>
+    <string name="title_activity_maps">Map</string>
+    <string name="home">Home</string>
+    <string name="show">Show</string>
+    <string name="addFriend">Add Friend</string>
+    <string name="backToMain">Back</string>
 </resources>

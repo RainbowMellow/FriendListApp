@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.listapp.R
 import kotlinx.android.synthetic.main.cell.*
@@ -17,81 +18,27 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 
-class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Adapter<RecycleAdapter.FriendViewHolder>(),
-    Filterable {
+class RecycleAdapter(private val friends: ArrayList<Friend>) : RecyclerView.Adapter<RecycleAdapter.FriendViewHolder>()
+{
 
-    //FriendFilterList = List shown in the recycleView
-    var friendFilterList = ArrayList<BEFriend>()
+    var friendFilterList = friends
 
-    //ListOfFilteredFriends = The list after it has been filtered
-    // (So you can use the spinner on the filtered text.)
-    var listOfFilteredFriends = ArrayList<BEFriend>()
+    var itemClickListener: ((position: Int, friend: Friend) -> Unit)? = null
 
-    init {
-        friendFilterList = friends
-        listOfFilteredFriends = friendFilterList
-    }
-
-
-    var itemClickListener: ((position: Int, friend: BEFriend) -> Unit)? = null
-
-    //Sets what should be filtered
-    override fun getFilter(): Filter {
-        return object : Filter() {
-            override fun performFiltering(constraint: CharSequence?): FilterResults {
-                val charSearch = constraint.toString()
-                if (charSearch.isEmpty()) {
-                    friendFilterList = friends
-                    listOfFilteredFriends = friendFilterList
-                }
-                else {
-                    val resultList = ArrayList<BEFriend>()
-
-                    //The user input from the search bar should be looked for in name, address and phone
-                    for (row in friends) {
-                        if(row.name.toLowerCase(Locale.ROOT).contains(
-                                charSearch.toLowerCase(Locale.ROOT).trim()
-                            ) ||
-                            row.address.toLowerCase(Locale.ROOT).contains(
-                                charSearch.toLowerCase(
-                                    Locale.ROOT
-                                ).trim()
-                            ) ||
-                            row.phone.toLowerCase(Locale.ROOT).contains(
-                                charSearch.toLowerCase(
-                                    Locale.ROOT
-                                ).trim()
-                            ))
-                        {
-                            resultList.add(row)
-                        }
-                    }
-                    friendFilterList = resultList
-
-                    //Setting the listOfFilteredFriends to be stuck at this instance of friendFilterList
-                    //Because friendFilterList changes depending on what the list should show on screen
-                    listOfFilteredFriends = friendFilterList
-                }
-                val filterResults = FilterResults()
-                filterResults.values = friendFilterList
-                return filterResults
-            }
-
-            override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                friendFilterList = results?.values as ArrayList<BEFriend>
-                notifyDataSetChanged()
-            }
-
-        }
-    }
-
+    /**
+     * Creates and returns the FriendViewHolder
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
+        println(friendFilterList)
         // Inflating R.layout.name_item
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.cell, parent, false)
         return FriendViewHolder(view)
     }
 
+    /**
+     * Binds the data to the FriendViewHolder that should be shown in each cell.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: FriendViewHolder, position: Int) {
         // Getting element from friend list at this position
@@ -109,7 +56,7 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
 
         if(element.picture != null)
         {
-            val mSaveBit = element.picture
+            val mSaveBit = Uri.parse(element.picture)
             val filePath: String = mSaveBit?.path.toString()
             val bitmap = BitmapFactory.decodeFile(filePath)
             holder.picture.setImageBitmap(bitmap)
@@ -135,17 +82,16 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         }
     }
 
+    /**
+     * Returns the size of the friendFilterList.
+     */
     override fun getItemCount(): Int {
         return friendFilterList.size
     }
 
-    //Returns the list to all friends
-    fun getAll() {
-        friendFilterList = listOfFilteredFriends
-        notifyDataSetChanged()
-    }
-
-    //Finds all the views we want to fill with info
+    /**
+     * Finds all the views we want to fill with info and makes them known to the FriendViewHolder.
+     */
     class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val txtName = itemView.findViewById(R.id.tvName) as TextView
         val txtPhone = itemView.findViewById(R.id.tvPhone) as TextView
@@ -153,76 +99,4 @@ class RecycleAdapter(private val friends: ArrayList<BEFriend>) : RecyclerView.Ad
         val picture = itemView.findViewById(R.id.ivPicture) as ImageView
         val birthday = itemView.findViewById(R.id.ivFlag) as ImageView
     }
-
-    fun addFriend(friend: BEFriend)
-    {
-        friendFilterList.add(friend)
-
-        var index = 0
-
-        friendFilterList.forEach{ f ->
-            if (f.name == friend.name && f.phone == friend.phone
-                    && f.address == friend.address)
-            {
-                index = friendFilterList.indexOf(f)
-            }
-        }
-
-        notifyDataSetChanged()
-        notifyItemRangeChanged(index, friendFilterList.size)
-    }
-
-    fun editFriend(friend: BEFriend, chosenFriend: BEFriend) {
-
-        println(chosenFriend.name)
-        println(chosenFriend.address)
-        println(chosenFriend.phone)
-
-        var index = 0
-
-        friendFilterList.forEach{ f ->
-            if (f.name == chosenFriend.name && f.phone == chosenFriend.phone
-                    && f.address == chosenFriend.address)
-            {
-                index = friendFilterList.indexOf(f)
-            }
-        }
-
-        println(index)
-
-        val editedFriend = friendFilterList[index]
-        editedFriend.name = friend.name
-        editedFriend.phone = friend.phone
-        editedFriend.address = friend.address
-        editedFriend.email = friend.email
-        editedFriend.url = friend.url
-        editedFriend.birthday = friend.birthday
-
-        editedFriend.picture = friend.picture
-
-        notifyItemChanged(index)
-    }
-
-    fun getList() : ArrayList<BEFriend>
-    {
-        return friendFilterList
-    }
-
-    fun deleteFriend(chosenFriend: BEFriend) {
-        var index = 0
-
-        friendFilterList.forEach{ f ->
-            if (f.name == chosenFriend.name && f.phone == chosenFriend.phone
-                    && f.address == chosenFriend.address)
-            {
-                index = friendFilterList.indexOf(f)
-            }
-        }
-
-        friendFilterList.removeAt(index)
-
-        notifyItemRemoved(index)
-        notifyItemRangeChanged(index, friendFilterList.size)
-    }
-
 }

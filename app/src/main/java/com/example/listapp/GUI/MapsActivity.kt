@@ -2,7 +2,7 @@ package com.example.listapp.GUI
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.example.listapp.Model.BEFriend
+import com.example.listapp.Model.Friend
 import com.example.listapp.R
 
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -16,7 +16,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
 
-    private var friends = ArrayList<BEFriend>()
+    private var friends = ArrayList<Friend>()
     private var currentLocation = LatLng(0.0, 0.0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +25,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         if (intent.extras != null) {
             val extras: Bundle = intent.extras!!
-            val friendList = extras.getSerializable("friendList") as ArrayList<BEFriend>
+            val friendList = extras.getSerializable("friendList") as ArrayList<Friend>
             val lat = extras.getDouble("lat")
             val lng = extras.getDouble("lng")
 
@@ -56,12 +56,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         for(friend in friends)
         {
-            val location = LatLng(friend.location.first, friend.location.second)
-
-            println(location)
-            println(currentLocation)
-
-            mMap.addMarker(MarkerOptions().position(location).title("Location Of " + friend.name))
+            if(friend.latitude != null && friend.longitude != null)
+            {
+                val location = LatLng(friend.latitude!!, friend.longitude!!)
+                mMap.addMarker(MarkerOptions().position(location).title("Location Of " + friend.name))
+            }
         }
 
         mMap.addMarker(MarkerOptions().position(currentLocation).title("My Current Location"))

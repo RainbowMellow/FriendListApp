@@ -12,49 +12,74 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.listapp.Model.BEFriend
-import com.example.listapp.Model.Friends
+import androidx.room.InvalidationTracker
+import com.example.listapp.Database.FriendRepositoryInDB
+import com.example.listapp.Model.Friend
 import com.example.listapp.Model.RecycleAdapter
 import com.example.listapp.R
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.cell.view.*
-import java.io.Serializable
+import java.time.LocalDate
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var friendAdapter: RecycleAdapter
 
+    lateinit var repo: FriendRepositoryInDB
+
+
+    /**
+     * Variable that stores the current location.
+     * Changes when the location changes.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
-    var friends = Friends().getAll()
     var currentLocation = Pair(0.0, 0.0)
 
+    /**
+     * Values that are used as resultcodes.
+     */
     val CREATE_FRIEND = 1
     val DELETE_FRIEND = 2
     val UPDATE_FRIEND = 3
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        //Initialization of repository
+        FriendRepositoryInDB.initialize(this)
+        repo = FriendRepositoryInDB.get()
+
+        //insertTestData()
+
+        handleRecycler()
 
         requestPermissions()
         startListening()
         getLocation()
 
-        //Find the RecyclerView and make a reference to it
+    }
+
+    /**
+     * Handles the recycler and gives it the information it needs.
+     */
+    fun handleRecycler()
+    {
+        // Find the RecyclerView and make a reference to it
         val recycler = findViewById<RecyclerView>(R.id.recyclerView)
 
-        //Setting the recyclers layoutmanager to be a LinearLayoutManager
+        // Setting the recyclers layoutmanager to be a LinearLayoutManager
         recycler.layoutManager = LinearLayoutManager(this)
 
-        //Adding the lines in between the rows
+        // Adding the lines in between the rows
         recycler.addItemDecoration(
             DividerItemDecoration(
                 this,
@@ -62,79 +87,61 @@ class MainActivity : AppCompatActivity() {
             )
         )
 
-        //Sets the items in the recycler to have a fixed size
+        // Sets the items in the recycler to have a fixed size
         recycler.setHasFixedSize(true)
-        friendAdapter = RecycleAdapter(friends)
-        recycler.adapter = friendAdapter
 
 
-        friendAdapter.itemClickListener = { position, chosenFriend ->
+        // Gets the list of friends from the repository
+        // and converts it to a list the recycler can use.
+        val friendsLiveData = repo.getAll()
 
-            //Opens the detailview with the detailactivity
-            val intent = Intent(this, DetailActivity::class.java)
-            val friend = friends[position]
+        friendsLiveData.observe(
+            this,
+            Observer { friendList ->
+                friendList?.let {
+                    val list = ArrayList(friendList)
+                    friendAdapter = RecycleAdapter(list)
+                    recycler.adapter = friendAdapter
 
-            val lat: Double = currentLocation.first
-            val lng: Double = currentLocation.second
+                    // Sets the itemClickListener.
+                    friendAdapter.itemClickListener = { position, chosenFriend ->
 
-            intent.putExtra("friend", friend)
-            intent.putExtra("isCreate", false)
-            intent.putExtra("lat", lat)
-            intent.putExtra("lng", lng)
+                        //Opens the detailview with the detailactivity
+                        val intent = Intent(this, DetailActivity::class.java)
+                        val friend = list[position]
 
-            startActivityForResult(intent, 1)
-        }
+                        val lat: Double = currentLocation.first
+                        val lng: Double = currentLocation.second
 
-        // region Unused filtering methods from before
-/*
-        //Sets a listener on the searchView.
-        //Activates when text is written in the search bar
-        swSearch.setOnQueryTextListener(object: SearchView.OnQueryTextListener{
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
+                        intent.putExtra("friend", friend)
+                        intent.putExtra("isCreate", false)
+                        intent.putExtra("lat", lat)
+                        intent.putExtra("lng", lng)
 
-            //Filters the list
-            override fun onQueryTextChange(newText: String?): Boolean {
-                (recycler.adapter as RecycleAdapter).filter.filter(newText)
-                return false
-            }
-        })*/
-
-
-        //Setup for the spinner
-        // val spinner = spinFilter
-        /*val filter = resources.getStringArray(R.array.filter)
-
-        if (spinner != null) {
-            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filter)
-            spinner.adapter = adapter
-        }
-
-        //Setting up the listener on the spinner
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) { }
-
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                when (position) {
-                    0 -> {
-                        (recycler.adapter as RecycleAdapter).getAll()
+                        startActivityForResult(intent, 1)
                     }
                 }
             }
-        }
-*/
-    // endregion
-
+        )
     }
+
+
+    /**
+     * Inserts test data into the database.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun insertTestData() {
+        val mRep = FriendRepositoryInDB.get()
+
+        mRep.insert(Friend(id = 0, name = "Emyle Chowne", phone = "51887794", address = "461 Crest Line Junction", email = "email.email@hotmail.com", url = "http://www.easv.dk", latitude = 39.421998333333335, longitude = -130.084, birthday = LocalDate.now(), picture = ""))
+    }
+
 
     // region Menu
 
+    /**
+     * Creates the menu.
+     */
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main_menu, menu);
@@ -143,12 +150,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    /**
+     * Sets the action that will happen if the user clicks on the menu item.
+     */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         val id: Int = item.getItemId()
-
 
         when (id) {
             R.id.action_new -> {
@@ -164,46 +170,32 @@ class MainActivity : AppCompatActivity() {
 
     // endregion
 
+    /**
+     * Gets a result from the DetailActivity and calls the appropriate method in the repository.
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == 1)
         {
             if(resultCode == CREATE_FRIEND)
             {
-                val friend = data?.extras?.getSerializable("friend") as BEFriend
-                friendAdapter.addFriend(friend)
-                friends = friendAdapter.getList()
+                val friend = data?.extras?.getSerializable("friend") as Friend
+                repo.insert(friend)
             }
 
             if(resultCode == DELETE_FRIEND)
             {
-                val friend = data?.extras?.getSerializable("chosenFriend") as BEFriend
-                friendAdapter.deleteFriend(friend)
-                friends = friendAdapter.getList()
+                val friend = data?.extras?.getSerializable("chosenFriend") as Friend
+                repo.delete(friend)
             }
 
             if(resultCode == UPDATE_FRIEND)
             {
-                val friend = data?.extras?.getSerializable("friend") as BEFriend
-                val chosenFriend = data.extras!!.getSerializable("chosenFriend") as BEFriend
-                friendAdapter.editFriend(friend, chosenFriend)
-                friends = friendAdapter.getList()
+                val friend = data?.extras?.getSerializable("friend") as Friend
+                repo.update(friend)
             }
         }
     }
-
-    // region Unused Clear Search field method
-
-    //Clears the search field, sets it as iconified (Like not clicked on yet)
-    //Selects all friends on the spinner
-    // fun onClickClear(view: View) {
-     //   swSearch.setQuery("", false)
-       // swSearch.isIconified = true
-
-    //    spinFilter.setSelection(0)
-    //}
-
-    // endregion
 
     // region Get Current Location
 
@@ -211,6 +203,9 @@ class MainActivity : AppCompatActivity() {
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_COARSE_LOCATION)
 
+    /**
+     * Requests permission to use the GPS.
+     */
     private fun requestPermissions() {
         if (!isPermissionGiven()) {
             println("permission denied to USE GPS - requesting it")
@@ -229,6 +224,9 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    /**
+     * Gets the location of the phone.
+     */
     @SuppressLint("MissingPermission")
     fun getLocation() {
         if (!isPermissionGiven()) {
@@ -251,6 +249,10 @@ class MainActivity : AppCompatActivity() {
 
     var myLocationListener: LocationListener? = null
 
+
+    /**
+     * Listens for changes in the location of the phone.
+     */
     @SuppressLint("MissingPermission")
     private fun startListening() {
         if (!isPermissionGiven())
@@ -281,6 +283,9 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    /**
+     * Stops listening for changes in the location of the phone.
+     */
     private fun stopListening() {
 
         if (myLocationListener == null) return

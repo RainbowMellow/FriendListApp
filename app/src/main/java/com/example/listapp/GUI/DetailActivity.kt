@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -20,9 +19,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
-import com.example.listapp.Model.BEFriend
+import com.example.listapp.Model.Friend
 import com.example.listapp.R
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.android.synthetic.main.detailview.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -32,20 +30,37 @@ import kotlin.collections.ArrayList
 
 class DetailActivity : AppCompatActivity() {
 
+    /**
+     * Boolean that changes based on if the user is creating- or editing/viewing a friend.
+     */
     var isCreate: Boolean = false
-    @RequiresApi(Build.VERSION_CODES.O)
-    var chosenFriend = BEFriend(
-        "", "", "", Pair(0.0, 0.0), "", "", LocalDate.now(), null)
 
+    /**
+     * Variable that gets overwritten with the friend the user has clicked on.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    var chosenFriend = Friend(
+        0,"", "", "", 0.0, 0.0, "", "", LocalDate.now(), "")
+
+    /**
+     * Variable that gets overwritten with the current location of the phone
+     * when the user clicked a friend.
+     */
     var currentLocation = Pair(0.0, 0.0)
 
+    /**
+     * Values that are used for resultcodes and requestcodes.
+     */
     val CREATE_FRIEND = 1
     val DELETE_FRIEND = 2
     val UPDATE_FRIEND = 3
     val PERMISSION_REQUEST_CODE = 1
-
-    var mFile: File? = null
     val CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE_BY_FILE = 101
+
+    /**
+     * Variable that stores the picture that user took of their friend.
+     */
+    var mFile: File? = null
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -65,11 +80,12 @@ class DetailActivity : AppCompatActivity() {
 
             isCreate = create
 
+            //Inputs all info from the chosen friend into the forms.
             if(!isCreate)
             {
                 val friend = extras.getSerializable("friend")
 
-                with(friend as BEFriend)
+                with(friend as Friend)
                 {
                     etName.setText(friend.name)
                     etPhone.setText(friend.phone)
@@ -89,7 +105,7 @@ class DetailActivity : AppCompatActivity() {
 
                     if(friend.picture != null)
                     {
-                        ibPicture.setImageURI(Uri.fromFile(friend.picture))
+                        ibPicture.setImageURI(Uri.parse(friend.picture))
                     }
                     else {
                         ibPicture.setImageResource(R.drawable.avatar_big)
@@ -102,6 +118,7 @@ class DetailActivity : AppCompatActivity() {
 
         }
 
+        //Hides the delete button when the user is creating a new friend.
         if(isCreate)
         {
             ibTrash.visibility = View.INVISIBLE
@@ -110,18 +127,20 @@ class DetailActivity : AppCompatActivity() {
 
     // region Menu
 
+    /**
+     * Creates the menu.
+     */
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.detail_menu, menu);
 
         return true;
-
     }
 
+    /**
+     * Sets the action that will happen if the user clicks on the menu item.
+     */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         val id: Int = item.getItemId()
 
         when (id) {
@@ -135,6 +154,11 @@ class DetailActivity : AppCompatActivity() {
 
     // endregion
 
+
+    /**
+     * Confirms with the user that they are sure they want to delete the current friend.
+     * Sends a delete requestcode if the user confirms.
+     */
     fun onClickDelete(view: View) {
         val builder = AlertDialog.Builder(this)
 
@@ -157,6 +181,10 @@ class DetailActivity : AppCompatActivity() {
         alertDialog.show()
     }
 
+    /**
+     * Confirms with the user that they are sure they want save/create the friend.
+     * Sends a save/create requestcode and the friend if the user confirms.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     fun onClickSave(view: View) {
         val builder = AlertDialog.Builder(this)
@@ -177,9 +205,15 @@ class DetailActivity : AppCompatActivity() {
                 val url = etURL.text.toString()
                 val birthday = LocalDate.parse(etBirthday.text.toString())
 
-                val picture = mFile
+                var picture: String? = ""
 
-                val friend = createFriend(name, phone, address, currentLocation, email, url, birthday, picture)
+                picture = if(mFile != null) {
+                    Uri.fromFile(mFile!!).toString()
+                } else {
+                    null
+                }
+
+                val friend = Friend(0, name, phone, address, currentLocation.first, currentLocation.second, email, url, birthday, picture)
 
                 val intent = Intent()
                 intent.putExtra("friend", friend)
@@ -206,7 +240,21 @@ class DetailActivity : AppCompatActivity() {
                 val url = etURL.text.toString()
                 val birthday = LocalDate.parse(etBirthday.text.toString())
 
-                val friend = createFriend(name, phone, address, Pair( 0.0 , 0.0 ), email, url, birthday, mFile)
+                var picture: String? = ""
+
+                picture = when {
+                    mFile != null -> {
+                        Uri.fromFile(mFile!!).toString()
+                    }
+                    chosenFriend.picture != null -> {
+                        chosenFriend.picture
+                    }
+                    else -> {
+                        null
+                    }
+                }
+
+                val friend = Friend(chosenFriend.id, name, phone, address, chosenFriend.latitude, chosenFriend.longitude, email, url, birthday, picture)
 
                 val intent = Intent()
                 intent.putExtra("friend", friend)
@@ -223,40 +271,27 @@ class DetailActivity : AppCompatActivity() {
         alertDialog.show()
     }
 
-    fun createFriend(
-        name: String,
-        phone: String,
-        address: String,
-        location: Pair<Double, Double>,
-        email: String,
-        url: String,
-        birthday: LocalDate,
-        picture: File?
-    ): BEFriend
-    {
-        val friend = BEFriend(
-            name = name,
-            phone = phone,
-            address = address,
-            location = location,
-            email = email,
-            url = url,
-            birthday = birthday,
-            picture = picture
-        )
-        return friend
-    }
+    // region Use other apps
 
+    /**
+     * Starts phone app
+     */
     fun onClickCall(view: View) {
         val callIntent = Intent(Intent.ACTION_DIAL)
         callIntent.data = Uri.parse("tel:${chosenFriend.phone}")
         startActivity(callIntent)
     }
 
+    /**
+     * Opens dialog.
+     */
     fun onClickText(view: View) {
         showYesNoDialog()
     }
 
+    /**
+     * Asks the user in a dialog box if they want to go to the texting app, og send a direct text.
+     */
     private fun showYesNoDialog() {
         val alertDialogBuilder = AlertDialog.Builder(this)
         alertDialogBuilder.setTitle("SMS Handling")
@@ -269,12 +304,18 @@ class DetailActivity : AppCompatActivity() {
         alertDialog.show()
     }
 
+    /**
+     * Sends a direct message with a default text.
+     */
     private fun sendMessage() {
         val m = SmsManager.getDefault()
         val text = "Hi, it goes well on the android course..."
         m.sendTextMessage(chosenFriend.phone, null, text, null, null)
     }
 
+    /**
+     * Starts texting app
+     */
     private fun startSMSActivity() {
         val sendIntent = Intent(Intent.ACTION_VIEW)
         sendIntent.data = Uri.parse("sms:${chosenFriend.phone}")
@@ -282,6 +323,9 @@ class DetailActivity : AppCompatActivity() {
         startActivity(sendIntent)
     }
 
+    /**
+     * Starts email app.
+     */
     fun onClickEMAIL(view: View) {
         val emailIntent = Intent(Intent.ACTION_SEND)
         emailIntent.type = "plain/text"
@@ -294,12 +338,18 @@ class DetailActivity : AppCompatActivity() {
         startActivity(emailIntent)
     }
 
+    /**
+     * Starts browser with the friends' url.
+     */
     fun onClickBROWSER(view: View) {
         val i = Intent(Intent.ACTION_VIEW)
         i.data = Uri.parse(chosenFriend.url)
         startActivity(i)
     }
 
+    /**
+     * Makes sure that we have permission to send a direct text.
+     */
     private fun sendSMSDirectly() {
         Toast.makeText(this, "An sms will be send", Toast.LENGTH_LONG)
                 .show()
@@ -327,8 +377,13 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
+    // endregion
+
     // region Picture
 
+    /**
+     * Checks permission for using the camera app.
+     */
     private fun checkPermissions() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         val permissions = mutableListOf<String>()
@@ -342,7 +397,9 @@ class DetailActivity : AppCompatActivity() {
         ActivityCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 
 
-
+    /**
+     * Creates file for storing the taken picture, and opens the camera app.
+     */
     fun onClickPicture(view: View) {
         mFile = getOutputMediaFile("Camera01") // create a file to save the image
 
@@ -350,8 +407,6 @@ class DetailActivity : AppCompatActivity() {
             Toast.makeText(this, "Could not create file...", Toast.LENGTH_LONG).show()
             return
         }
-
-
 
         // create Intent to take a picture
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -371,10 +426,9 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-
-    // return a new file with a timestamp name in a folder named [folder] in
-    // the external directory for pictures.
-    // Return null if the file cannot be created
+    /**
+     * Creates a file or returns null if it fails.
+     */
     private fun getOutputMediaFile(folder: String): File? {
         // in an emulated device you can see the external files in /sdcard/Android/data/<your app>.
         val mediaStorageDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), folder)
@@ -395,6 +449,9 @@ class DetailActivity : AppCompatActivity() {
                 "_" + timeStamp + "." + postfix)
     }
 
+    /**
+     * Checks if the user accepted the photo or canceled/other action.
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         val image = findViewById<ImageButton>(R.id.ibPicture)
@@ -407,14 +464,18 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Handles if another result than OK comes back.
+     */
     private fun handleOther(resultCode: Int) {
         if (resultCode == RESULT_CANCELED)
             Toast.makeText(this, "Canceled...", Toast.LENGTH_LONG).show()
         else Toast.makeText(this, "Picture NOT taken - unknown error...", Toast.LENGTH_LONG).show()
     }
 
-
-    // show the image allocated in [f] in imageview [img]. Show meta data in [txt]
+    /**
+     * Sets the imageButtons picture to the picture taken.
+     */
     private fun showImageFromFile(img: ImageButton, f: File) {
         img.setImageURI(Uri.fromFile(f))
     }
@@ -422,15 +483,23 @@ class DetailActivity : AppCompatActivity() {
     // endregion
 
     // region Map
+
+    /**
+     * Sets the friends location to the current location
+     */
     fun onClickHome(view: View) {
-        chosenFriend.location = currentLocation
+        chosenFriend.latitude = currentLocation.first
+        chosenFriend.longitude = currentLocation.second
     }
 
+    /**
+     * Opens the maps app with the current location and the friends' location.
+     */
     fun onClickMap(view: View) {
 
         if(currentLocation != Pair(0.0, 0.0))
         {
-            val friendList = ArrayList<BEFriend>()
+            val friendList = ArrayList<Friend>()
             friendList.add(chosenFriend)
 
             val intent = Intent(this, MapsActivity::class.java)
